@@ -6,13 +6,113 @@
             "defaultValue": "stuweb",
             "type": "String"
         },
-        "user_name": {
-            "defaultValue": "jstreeter",
+        "userName": {
+            "defaultValue": "student",
             "type": "String"
+        },
+        "storageAccountPrefix": {
+            "type": "string",
+            "defaultValue": "sftpstg",
+            "metadata": {
+                "description": "Prefix for new storage account"
+            }
+        },
+        "sftpPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password to use for SFTP access"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Primary location for resources"
+            }
+        },
+        "containerGroupDNSLabel": {
+            "type": "string",
+            "defaultValue": "[uniqueString(resourceGroup().id, deployment().name)]",
+            "metadata": {
+                "description": "DNS label for container group"
+            }
         }
     },
-    "variables": {},
+    "variables": {
+        "sftpContainerName": "sftp",
+        "sftpContainerGroupName": "sftp-group",
+        "sftpContainerImage": "atmoz/sftp:debian",
+        "sftpEnvVariable": "[format('{0}:{1}:1001', parameters('userName'), parameters('sftpPassword'))]",
+        "storageAccountName": "[take(toLower(format('{0}{1}', parameters('storageAccountPrefix'), uniqueString(resourceGroup().id))), 24)]"
+        },
     "resources": [
+        {
+            "type": "Microsoft.ContainerInstance/containerGroups",
+            "apiVersion": "2019-12-01",
+            "name": "[variables('sftpContainerGroupName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "containers": [
+                {
+                    "name": "[variables('sftpContainerName')]",
+                    "properties": {
+                    "image": "[variables('sftpContainerImage')]",
+                    "environmentVariables": [
+                        {
+                        "name": "SFTP_USERS",
+                        "secureValue": "[variables('sftpEnvVariable')]"
+                        }
+                    ],
+                    "resources": {
+                        "requests": {
+                        "cpu": 1,
+                        "memoryInGB": 1
+                        }
+                    },
+                    "ports": [
+                        {
+                        "port": 22,
+                        "protocol": "TCP"
+                        }
+                    ],
+                    "volumeMounts": [
+                        {
+                        "mountPath": "[format('/home/{0}/upload', parameters('userName'))]",
+                        "name": "sftpvolume",
+                        "readOnly": false
+                        }
+                    ]
+                    }
+                }
+                ],
+                "osType": "Linux",
+                "ipAddress": {
+                "type": "Public",
+                "ports": [
+                    {
+                    "port": 22,
+                    "protocol": "TCP"
+                    }
+                ],
+                "dnsNameLabel": "[parameters('containerGroupDNSLabel')]"
+                },
+                "restartPolicy": "OnFailure",
+                "volumes": [
+                {
+                    "name": "sftpvolume",
+                    "azureFile": {
+                    "readOnly": false,
+                    "shareName": "[parameters('userName')]",
+                    "storageAccountName": "[variables('storageAccountName')]",
+                    "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value]"
+                    }
+                }
+                ]
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+            ]
+        },
         {
             "type": "Microsoft.Storage/storageAccounts",
             "apiVersion": "2022-05-01",
@@ -82,12 +182,6 @@
                 "tier": "Standard"
             },
             "properties": {
-                "protocolSettings": {
-                    "smb": {}
-                },
-                "cors": {
-                    "corsRules": []
-                },
                 "shareDeleteRetentionPolicy": {
                     "enabled": true,
                     "days": 7
@@ -97,7 +191,7 @@
         {
             "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
             "apiVersion": "2022-05-01",
-            "name": "[concat(parameters('storageAccount_name'), '/default/', parameters('user_name'))]",
+            "name": "[concat(parameters('storageAccount_name'), '/default/', parameters('userName'))]",
             "dependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts/fileServices', parameters('storageAccount_name'), 'default')]",
                 "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccount_name'))]"
