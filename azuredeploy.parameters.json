@@ -3,10 +3,10 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
       "sftpUser": {
-        "value": "GEN-UNIQUE-6"
+        "value": "jstreeter"
       },
       "sftpPassword": {
-        "value": "GEN-PASSWORD"
+        "value": "iw2slep!"
       }
     }
   }
