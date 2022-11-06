@@ -1,0 +1,1 @@
+az deployment group create --resource-group IAM-SFTP --template-file .\azuredeploy.json --parameters sftpPassword="iw2slep!" sftpUser="jstreeter" fileShareName="jstreeter" storageAccountPrefix="stuweb" containerGroupDNSLabel="jstreeter" storageAccountPrefix="jstreeter"
