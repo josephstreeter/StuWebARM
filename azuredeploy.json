@@ -65,7 +65,7 @@
   },
   "functions": [],
   "variables": {
-    "sftpContainerGroupName": "sftp-group",
+    "sftpContainerGroupName": "[parameters('sftpUser')]", //"sftp-group",
     "sftpContainerName": "sftp",
     "sftpContainerImage": "atmoz/sftp:debian",
     "sftpEnvVariable": "[format('{0}:{1}:1001', parameters('sftpUser'), parameters('sftpPassword'))]",
