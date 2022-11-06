@@ -65,10 +65,12 @@
   },
   "functions": [],
   "variables": {
-    "sftpContainerName": "sftp",
     "sftpContainerGroupName": "sftp-group",
+    "sftpContainerName": "sftp",
     "sftpContainerImage": "atmoz/sftp:debian",
     "sftpEnvVariable": "[format('{0}:{1}:1001', parameters('sftpUser'), parameters('sftpPassword'))]",
+    "webContainerName": "web",
+    "webContainerImage": "ubuntu/apache2",
     "storageAccountName": "[take(toLower(format('{0}{1}', parameters('storageAccountPrefix'), uniqueString(resourceGroup().id))), 24)]"
   },
   "resources": [
@@ -127,6 +129,31 @@
                 }
               ]
             }
+          },
+          {
+            "name": "[variables('webContainerName')]",
+            "properties": {
+              "image": "[variables('webContainerImage')]",
+              "resources": {
+                "requests": {
+                  "cpu": 1,
+                  "memoryInGB": 1
+                }
+              },
+              "ports": [
+                {
+                  "port": 80,
+                  "protocol": "TCP"
+                }
+              ],
+              "volumeMounts": [
+                {
+                  "mountPath": "[format('/var/www/html', parameters('sftpUser'))]",
+                  "name": "htmlvolume",
+                  "readOnly": false
+                }
+              ]
+            }
           }
         ],
         "osType": "Linux",
@@ -136,6 +163,10 @@
             {
               "port": 22,
               "protocol": "TCP"
+            },
+            {
+              "port": 80,
+              "protocol": "TCP"
             }
           ],
           "dnsNameLabel": "[parameters('containerGroupDNSLabel')]"
@@ -144,6 +175,15 @@
         "volumes": [
           {
             "name": "sftpvolume",
+            "azureFile": {
+              "readOnly": false,
+              "shareName": "[parameters('fileShareName')]",
+              "storageAccountName": "[variables('storageAccountName')]",
+              "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value]"
+            }
+          },
+          {
+            "name": "htmlvolume",
             "azureFile": {
               "readOnly": false,
               "shareName": "[parameters('fileShareName')]",
