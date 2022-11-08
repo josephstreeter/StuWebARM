@@ -7,7 +7,7 @@ Provide a temporary web hosting solution for teaching basic HTML editing
 2. Students are able to create a CNAME in whatever domain they own to point to the site
 3. Avoid creating a VM
 4. Fully automated
-5. Students able to upload content easily
+5. Students able to upload content easily (SFTP)
 6. Student's content is kept separate from each other
 
 ## Options
