@@ -48,3 +48,10 @@ Cons
 
 ## Concept
 This solution uses two containers and a Azure Storage Account per student. One container provides the SFTP functionality to allow the student to upload content and the other hosts the web server to serve up the static content. Both containers map to the same Storage Account file share. The entire solution is deployed from a single ARM template.
+
+## Results
+While it does accomplish the goals, I'm not sure that it will be cheaper than a small VM. However, it does seem to offer better automation. 
+
+Putting SFTP and the web servier in the same container may improve cost, but then the cotainer will start to get larger and require the creation and management of a custom image. Likewise, a single container for all the SFTP would reduce cost, but would also require a custom image that has to be maintained in addition to complicating the automation. 
+
+If there is a way to SFTP the contents to the $Web blob, the web server container could be eliminated entirely. SFTP on the storage account itself can only upload to the fileshare and it appears that the SFTP container can only map storage to the fileshare. There is still the issue of an extra Graph API call that has to be made to enable Static Website on the storage account. 
